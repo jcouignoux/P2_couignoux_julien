@@ -1,19 +1,24 @@
+# coding: utf8
+
 import requests
 from bs4 import BeautifulSoup
+import math
+import csv
 
 url = 'https://books.toscrape.com/'
 HEADER = [
     'product_page_url',
-    'universal_ product_code (upc)',
     'title',
+    'universal_ product_code (upc)',
     'price_including_tax',
     'price_excluding_tax',
     'number_available',
+    'review_rating',
     'product_description',
     'category',
-    'review_rating',
     'image_url',
 ]
+CSV_PATH = "C:\\Users\\USER\\Documents\\OCR\\Projet\\P2_couignoux_julien\\"
 
 res = requests.get(url)
 print(res)
@@ -28,24 +33,60 @@ def add_book(book_url, category):
         book['product_page_url'] = book_url
         book['title'] = html.find('head').find(
             'title').text.split('|')[0].strip()
-        book['product_description'] = html.find(
-            'div', {'id': 'product_description'}).find_next('p').text
-        book['category'] = category
-        product_description = html.find('h2', text='Product Information').find_next(
+        print(book['title'])
+        product_information = html.find('h2', text='Product Information').find_next(
             'table', {'class': 'table table-striped'}).findAll('tr')
-        for desc in product_description:
+        for desc in product_information:
             if desc.find('th').text == 'UPC':
                 book['universal_ product_code (upc)'] = desc.find('td').text
             elif desc.find('th').text == 'Price (incl. tax)':
-                book['price_including_tax'] = desc.find('td').text
+                book['price_including_tax'] = desc.find(
+                    'td').text
             elif desc.find('th').text == 'Price (excl. tax)':
                 book['price_excluding_tax'] = desc.find('td').text
             elif desc.find('th').text == 'Availability':
                 book['number_available'] = desc.find('td').text
             elif desc.find('th').text == 'Number of reviews':
                 book['review_rating'] = desc.find('td').text
+        book['product_description'] = html.find(
+            'div', {'id': 'product_description'}).find_next('p').text
+        book['category'] = category[0]
+        book['image_url'] = str(url) + html.find(
+            'div', {'id': 'product_gallery'}).find('img')['src'].replace('../../', '')
 
     return book
+
+
+def create_links_list(category):
+    links_list = []
+    index = requests.get(url + category[1])
+    if index.ok:
+        total_number = BeautifulSoup(index.text, 'html.parser').find(
+            'form', {'class': 'form-horizontal'}).find('strong').text
+        if int(total_number) >= 20:
+            books_number = BeautifulSoup(index.text, 'html.parser').find(
+                'form', {'class': 'form-horizontal'}).find('strong').find_next('strong').find_next('strong').text
+            pages_number = math.ceil(int(total_number) / int(books_number))
+        else:
+            pages_number = 1
+        print(pages_number)
+        if pages_number == 1:
+            for article in BeautifulSoup(index.text, 'html.parser').findAll('article', {'class': 'product_pod'}):
+                link = str(url) + 'catalogue/' + article.find(
+                    'div', {'class': 'image_container'}).find('a')['href'].replace('../../../', '')
+                links_list.append(link)
+        else:
+            for i in range(pages_number):
+                page = requests.get(
+                    url + category[1].replace('index', 'page-'+str(i + 1)))
+                for article in BeautifulSoup(page.text, 'html.parser').findAll('article', {'class': 'product_pod'}):
+                    link = str(url) + 'catalogue/' + article.find(
+                        'div', {'class': 'image_container'}).find('a')['href'].replace('../../../', '')
+                    links_list.append(link)
+    if len(links_list) != int(total_number):
+        print('liste lien différent nombre livres')
+
+    return links_list
 
 
 def create_categories(res):
@@ -61,13 +102,12 @@ def create_categories(res):
 
 
 if res.ok:
-    # categories = create_categories(res)
-    # print(categories)
-    category = 'test'
-    book_urls = [
-        'https://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html', ]
-    for book_url in book_urls:
-        res = add_book(book_url, category)
-        print(res)
+    categories = create_categories(res)
+    books = {}
+    for category in categories.items():
+        books[category[0]] = []
+        book_url_list = create_links_list(category)
 else:
     print('error')
+
+print(books)
