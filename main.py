@@ -2,6 +2,8 @@
 
 import requests
 from bs4 import BeautifulSoup
+from pathlib import Path
+from datetime import datetime
 import math
 import csv
 
@@ -18,10 +20,12 @@ HEADER = [
     'category',
     'image_url',
 ]
-CSV_PATH = "C:\\Users\\USER\\Documents\\OCR\\Projet\\P2_couignoux_julien\\"
+
+CSV_PATH = Path('./outputs/').resolve()
+# print(CSV_PATH)
+DATE = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
 res = requests.get(url)
-print(res)
 
 
 def add_book(book_url, category):
@@ -33,7 +37,7 @@ def add_book(book_url, category):
         book['product_page_url'] = book_url
         book['title'] = html.find('head').find(
             'title').text.split('|')[0].strip()
-        print(book['title'])
+        # print(book['title'])
         product_information = html.find('h2', text='Product Information').find_next(
             'table', {'class': 'table table-striped'}).findAll('tr')
         for desc in product_information:
@@ -71,7 +75,6 @@ def create_links_list(category):
             pages_number = math.ceil(int(total_number) / int(books_number))
         else:
             pages_number = 1
-        print(pages_number)
         if pages_number == 1:
             for article in BeautifulSoup(index.text, 'html.parser').findAll('article', {'class': 'product_pod'}):
                 link = str(url) + 'catalogue/' + article.find(
@@ -85,6 +88,8 @@ def create_links_list(category):
                     link = str(url) + 'catalogue/' + article.find(
                         'div', {'class': 'image_container'}).find('a')['href'].replace('../../../', '')
                     links_list.append(link)
+        print('Catégorie: ' + str(category[0]) +
+              ' (' + str(len(links_list)) + ').')
     if len(links_list) != int(total_number):
         print('liste lien différent nombre livres')
 
@@ -104,19 +109,20 @@ def create_categories(res):
 
 
 def create_csv(books):
-    with open(CSV_PATH + str(category[0]) + '.csv', 'w', newline='', encoding='utf-8') as csvfile:
+    filename = str(category[0]) + str(DATE) + '.csv'
+    with open(str(CSV_PATH) + '\\' + filename, 'w', newline='', encoding='utf-8') as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=HEADER)
         writer.writeheader()
         for book in books:
-            print(book)
             writer.writerow(book)
+    print(str(CSV_PATH) + "/" + str(category[0]) + str(DATE) + '.csv')
 
-    return CSV_PATH + str(category[0]) + '.csv'
+    return str(CSV_PATH) + "/" + str(category[0]) + str(DATE) + '.csv'
 
 
 if res.ok:
-    categories = create_categories(res)
-    # categories = {'Travel': 'catalogue/category/books/travel_2/index.html', }
+    # categories = create_categories(res)
+    categories = {'Travel': 'catalogue/category/books/travel_2/index.html', }
     books = {}
     for category in categories.items():
         books[category[0]] = []
@@ -128,4 +134,4 @@ if res.ok:
 else:
     print('error')
 
-# print(books)
+# print(list(CSV_PATH.glob('./*.csv')))
