@@ -48,8 +48,10 @@ def add_book(book_url, category):
                 book['number_available'] = desc.find('td').text
             elif desc.find('th').text == 'Number of reviews':
                 book['review_rating'] = desc.find('td').text
-        book['product_description'] = html.find(
-            'div', {'id': 'product_description'}).find_next('p').text
+        if html.find(
+                'div', {'id': 'product_description'}):
+            book['product_description'] = html.find(
+                'div', {'id': 'product_description'}).find_next('p').text
         book['category'] = category[0]
         book['image_url'] = str(url) + html.find(
             'div', {'id': 'product_gallery'}).find('img')['src'].replace('../../', '')
@@ -101,13 +103,29 @@ def create_categories(res):
     return categories
 
 
+def create_csv(books):
+    with open(CSV_PATH + str(category[0]) + '.csv', 'w', newline='', encoding='utf-8') as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames=HEADER)
+        writer.writeheader()
+        for book in books:
+            print(book)
+            writer.writerow(book)
+
+    return CSV_PATH + str(category[0]) + '.csv'
+
+
 if res.ok:
     categories = create_categories(res)
+    # categories = {'Travel': 'catalogue/category/books/travel_2/index.html', }
     books = {}
     for category in categories.items():
         books[category[0]] = []
         book_url_list = create_links_list(category)
+        for book_url in book_url_list:
+            book_details = add_book(book_url, category)
+            books[category[0]].append(book_details)
+        path_csv = create_csv(books[category[0]])
 else:
     print('error')
 
-print(books)
+# print(books)
