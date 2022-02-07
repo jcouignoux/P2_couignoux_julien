@@ -37,7 +37,6 @@ def add_book(book_url, category):
         book['product_page_url'] = book_url
         book['title'] = html.find('head').find(
             'title').text.split('|')[0].strip()
-        # print(book['title'])
         product_information = html.find('h2', text='Product Information').find_next(
             'table', {'class': 'table table-striped'}).findAll('tr')
         for desc in product_information:
@@ -52,8 +51,7 @@ def add_book(book_url, category):
                 book['number_available'] = desc.find('td').text
             elif desc.find('th').text == 'Number of reviews':
                 book['review_rating'] = desc.find('td').text
-        if html.find(
-                'div', {'id': 'product_description'}):
+        if html.find('div', {'id': 'product_description'}):
             book['product_description'] = html.find(
                 'div', {'id': 'product_description'}).find_next('p').text
         book['category'] = category[0]
@@ -115,14 +113,14 @@ def create_csv(books):
         writer.writeheader()
         for book in books:
             writer.writerow(book)
-    print(str(CSV_PATH) + "/" + str(category[0]) + str(DATE) + '.csv')
+    # print(str(CSV_PATH) + "/" + str(category[0]) + str(DATE) + '.csv')
 
     return str(CSV_PATH) + "/" + str(category[0]) + str(DATE) + '.csv'
 
 
 if res.ok:
-    # categories = create_categories(res)
-    categories = {'Travel': 'catalogue/category/books/travel_2/index.html', }
+    categories = create_categories(res)
+    # categories = {'Travel': 'catalogue/category/books/travel_2/index.html', }
     books = {}
     for category in categories.items():
         books[category[0]] = []
@@ -130,8 +128,13 @@ if res.ok:
         for book_url in book_url_list:
             book_details = add_book(book_url, category)
             books[category[0]].append(book_details)
+        # print(category[0])
         path_csv = create_csv(books[category[0]])
 else:
     print('error')
 
-# print(list(CSV_PATH.glob('./*.csv')))
+print('-------------------------------------------')
+print('')
+print('Liste csv:')
+for csv in list(CSV_PATH.glob('./*' + str(DATE) + '.csv')):
+    print(csv)
