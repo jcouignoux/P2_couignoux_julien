@@ -21,8 +21,8 @@ HEADER = [
     'image_url',
 ]
 
-CSV_PATH = Path('./outputs/').resolve()
-# print(CSV_PATH)
+CSV_PATH = Path('./outputs/csv').resolve()
+IMG_PATH = Path('./outputs/img').resolve()
 DATE = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
 res = requests.get(url)
@@ -107,7 +107,7 @@ def create_categories(res):
 
 
 def create_csv(books):
-    filename = str(category[0]) + str(DATE) + '.csv'
+    filename = str(category[0]) + '_' + str(DATE) + '.csv'
     with open(str(CSV_PATH) + '\\' + filename, 'w', newline='', encoding='utf-8') as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=HEADER)
         writer.writeheader()
@@ -116,6 +116,16 @@ def create_csv(books):
     # print(str(CSV_PATH) + "/" + str(category[0]) + str(DATE) + '.csv')
 
     return str(CSV_PATH) + "/" + str(category[0]) + str(DATE) + '.csv'
+
+
+def get_image(img_url, title):
+    request = requests.get(img_url, allow_redirects=True)
+    title_mod = title.replace(':', '_').replace('(', '').replace(')', '').replace(' ', '_').replace(
+        '/', '_').replace('"', '').replace("'", "").replace('...', '').replace('&', '').replace('*', '').replace('?', '')
+    imagename = str(title_mod) + '.' + img_url.split('.')[-1]
+    img = open(str(IMG_PATH) + '\\' + imagename, 'wb').write(request.content)
+
+    return img
 
 
 if res.ok:
@@ -128,7 +138,8 @@ if res.ok:
         for book_url in book_url_list:
             book_details = add_book(book_url, category)
             books[category[0]].append(book_details)
-        # print(category[0])
+            img = get_image(book_details['image_url'],
+                            book_details['title'])
         path_csv = create_csv(books[category[0]])
 else:
     print('error')

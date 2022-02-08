@@ -8,8 +8,12 @@ This script checks the site __[Books to Scrape](https://books.toscrape.com/)__ t
 -----  
 >Run the script with the command *python main.py*
 
-![](P2_README.gif)
+![](readme/P2_README.gif)
 
->You can get your dated and categorized .csv ouputs in the *outputs* folder
+>You can get your dated and categorized .csv ouputs in the *outputs/csv* folder
 
-![](P2_README.png)
+![](readme/P2_README_csv.png)
+
+>You can get your renamed image ouputs in the *outputs/img* folder
+
+![](readme/P2_README_img.png)
