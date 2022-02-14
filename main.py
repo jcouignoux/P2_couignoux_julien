@@ -33,7 +33,8 @@ def add_book(book_url, category):
     book = {}
     if res.ok:
         html = BeautifulSoup(
-            res.text, 'html.parser')
+            res.content, 'html.parser')
+        # print(html.original_encoding)
         book['product_page_url'] = book_url
         book['title'] = html.find('head').find(
             'title').text.split('|')[0].strip()
@@ -41,10 +42,11 @@ def add_book(book_url, category):
             'table', {'class': 'table table-striped'}).findAll('tr')
         for desc in product_information:
             if desc.find('th').text == 'UPC':
-                book['universal_ product_code (upc)'] = desc.find('td').text
+                book['universal_ product_code (upc)'] = desc.find(
+                    'td').text
             elif desc.find('th').text == 'Price (incl. tax)':
                 book['price_including_tax'] = desc.find(
-                    'td').text
+                    'td').encode('utf-8')
             elif desc.find('th').text == 'Price (excl. tax)':
                 book['price_excluding_tax'] = desc.find('td').text
             elif desc.find('th').text == 'Availability':
@@ -53,7 +55,7 @@ def add_book(book_url, category):
                 book['review_rating'] = desc.find('td').text
         if html.find('div', {'id': 'product_description'}):
             book['product_description'] = html.find(
-                'div', {'id': 'product_description'}).find_next('p').text
+                'div', {'id': 'product_description'}).find_next('p').text.replace(';', '')
         book['category'] = category[0]
         book['image_url'] = str(url) + html.find(
             'div', {'id': 'product_gallery'}).find('img')['src'].replace('../../', '')
@@ -88,6 +90,7 @@ def create_links_list(category):
                     links_list.append(link)
         print('Catégorie: ' + str(category[0]) +
               ' (' + str(len(links_list)) + ').')
+
     if len(links_list) != int(total_number):
         print('liste lien différent nombre livres')
 
@@ -113,24 +116,27 @@ def create_csv(books):
         writer.writeheader()
         for book in books:
             writer.writerow(book)
-    # print(str(CSV_PATH) + "/" + str(category[0]) + str(DATE) + '.csv')
 
-    return str(CSV_PATH) + "/" + str(category[0]) + str(DATE) + '.csv'
+    return str(CSV_PATH) + '\\' + filename
 
 
 def get_image(img_url, title):
     request = requests.get(img_url, allow_redirects=True)
-    title_mod = title.replace(':', '_').replace('(', '').replace(')', '').replace(' ', '_').replace(
-        '/', '_').replace('"', '').replace("'", "").replace('...', '').replace('&', '').replace('*', '').replace('?', '')
-    imagename = str(title_mod) + '.' + img_url.split('.')[-1]
-    img = open(str(IMG_PATH) + '\\' + imagename, 'wb').write(request.content)
+    if request.ok:
+        try:
+            title_mod = title.replace(':', '_').replace('(', '').replace(')', '').replace(' ', '_').replace(
+                '/', '_').replace('"', '').replace("'", "").replace('...', '').replace('&', '').replace('*', '').replace('?', '').replace('#', '')
+            imagename = str(title_mod) + '.' + img_url.split('.')[-1]
+            img = open(str(IMG_PATH) + '\\' + imagename,
+                       'wb').write(request.content)
+        except Exception as e:
+            print(str(e))
 
     return img
 
 
 if res.ok:
     categories = create_categories(res)
-    # categories = {'Travel': 'catalogue/category/books/travel_2/index.html', }
     books = {}
     for category in categories.items():
         books[category[0]] = []
@@ -142,7 +148,7 @@ if res.ok:
                             book_details['title'])
         path_csv = create_csv(books[category[0]])
 else:
-    print('error')
+    print('Unable to access to the site')
 
 print('-------------------------------------------')
 print('')
