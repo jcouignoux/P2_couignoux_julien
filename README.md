@@ -17,3 +17,7 @@ This script checks the site __[Books to Scrape](https://books.toscrape.com/)__ t
 >You can get your renamed image ouputs in the *outputs/img* folder
 
 ![](readme/P2_README_img.png)
+
+
+>To read from Excel, open the file with utf-8 encode.  
+http://help.ubilab.io/fr/articles/1074523-import-d-un-fichier-cvs-utf8-dans-excel
