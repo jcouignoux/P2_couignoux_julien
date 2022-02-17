@@ -34,7 +34,6 @@ def add_book(book_url, category):
     if res.ok:
         html = BeautifulSoup(
             res.content, 'html.parser')
-        # print(html.original_encoding)
         book['product_page_url'] = book_url
         book['title'] = html.find('head').find(
             'title').text.split('|')[0].strip()
@@ -46,7 +45,7 @@ def add_book(book_url, category):
                     'td').text
             elif desc.find('th').text == 'Price (incl. tax)':
                 book['price_including_tax'] = desc.find(
-                    'td').encode('utf-8')
+                    'td').text
             elif desc.find('th').text == 'Price (excl. tax)':
                 book['price_excluding_tax'] = desc.find('td').text
             elif desc.find('th').text == 'Availability':
